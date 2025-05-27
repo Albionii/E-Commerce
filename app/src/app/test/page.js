@@ -1,5 +1,8 @@
 export default function Test(){
+    const MONGODB_URI = process.env.MONGODB_URI;
+
+
     return(
-        <div className="p-10 h-5 text-red-700">Hello Test</div>
+        <p>{MONGODB_URI}</p>
     )
 }
