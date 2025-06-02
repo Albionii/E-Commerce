@@ -12,7 +12,7 @@ export interface CartItem {
   stock: number
 }
 
-interface CartStore {
+interface CartStore { 
   items: CartItem[]
   addItem: (product: Omit<CartItem, "quantity">) => void
   removeItem: (id: string) => void

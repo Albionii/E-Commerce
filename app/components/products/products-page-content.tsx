@@ -1,32 +1,36 @@
-import { ProductsGrid } from "./products-grid"
-import { ProductsFilters } from "./products-filters"
-import { ProductsSort } from "./products-sort"
-import { ProductsPagination } from "./products-pagination"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ProductsGrid } from "./products-grid";
+import { ProductsFilters } from "./products-filters";
+import { ProductsSort } from "./products-sort";
+import { ProductsPagination } from "./products-pagination";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProductsPageContentProps {
   searchParams: {
-    category?: string
-    search?: string
-    page?: string
-    sort?: string
-    minPrice?: string
-    maxPrice?: string
-  }
+    category?: string;
+    search?: string;
+    page?: string;
+    sort?: string;
+    minPrice?: string;
+    maxPrice?: string;
+  };
 }
 
-export async function ProductsPageContent({ searchParams }: ProductsPageContentProps) {
+export async function ProductsPageContent({
+  searchParams,
+}: ProductsPageContentProps) {
   try {
-
-
-    const page = Number(searchParams.page) || 1
-    const limit = 12
-    const category = searchParams.category
-    const search = searchParams.search
-    const sort = searchParams.sort || "newest"
-    const minPrice = searchParams.minPrice ? Number(searchParams.minPrice) : undefined
-    const maxPrice = searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined
+    const page = Number(searchParams.page) || 1;
+    const limit = 12;
+    const category = searchParams.category;
+    const search = searchParams.search;
+    const sort = searchParams.sort || "newest";
+    const minPrice = searchParams.minPrice
+      ? Number(searchParams.minPrice)
+      : undefined;
+    const maxPrice = searchParams.maxPrice
+      ? Number(searchParams.maxPrice)
+      : undefined;
 
     const filters = {
       page,
@@ -36,24 +40,29 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
       minPrice,
       maxPrice,
       sort,
-    }
+    };
 
-
-    const { getAllProducts, getCategories } = await import("@/lib/database/products")
+    const { getAllProducts } = await import("@/lib/database/products");
+    const { getAllCategories } = await import("@/lib/database/categories");
 
     const [productsResult, categories] = await Promise.all([
       getAllProducts(filters).catch((error) => {
-        console.error("Error fetching products:", error)
-        return { products: [], total: 0, pages: 0 }
+        console.error("Error fetching products:", error);
+        return { products: [], total: 0, pages: 0 };
       }),
-      getCategories().catch((error) => {
-        console.error("Error fetching categories:", error)
-        return []
-      }),
-    ])
+      getAllCategories()
+        .then((data) =>
+          (data.categories || [])
+            .filter((cat: any) => cat.isActive && typeof cat.name === "string")
+            .map((cat: any) => cat.name)
+        )
+        .catch((error) => {
+          console.error("Error fetching categories:", error);
+          return [];
+        }),
+    ]);
 
-    const { products, total, pages } = productsResult
-
+    const { products, total, pages } = productsResult;
 
     const serializedProducts = products.map((product: any) => ({
       id: product._id.toString(),
@@ -64,9 +73,11 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
       category: product.category,
       stock: product.stock,
       featured: product.featured,
-    }))
+    }));
 
-    const activeFiltersCount = [category, search, minPrice, maxPrice].filter(Boolean).length
+    const activeFiltersCount = [category, search, minPrice, maxPrice].filter(
+      Boolean
+    ).length;
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -74,7 +85,9 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
           <div className="sticky top-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Filters</h2>
-              {activeFiltersCount > 0 && <Badge variant="secondary">{activeFiltersCount} active</Badge>}
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary">{activeFiltersCount} active</Badge>
+              )}
             </div>
             <ProductsFilters
               categories={categories}
@@ -112,14 +125,23 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
 
               {pages > 1 && (
                 <div className="mt-8">
-                  <ProductsPagination currentPage={page} totalPages={pages} searchParams={searchParams} />
+                  <ProductsPagination
+                    currentPage={page}
+                    totalPages={pages}
+                    searchParams={searchParams}
+                  />
                 </div>
               )}
             </>
           ) : (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
-                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="mx-auto h-12 w-12"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -128,15 +150,19 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No products found
+              </h3>
+              <p className="text-gray-500">
+                Try adjusting your search or filter criteria
+              </p>
             </div>
           )}
         </div>
       </div>
-    )
+    );
   } catch (error) {
-    console.error("Error in ProductsPageContent:", error)
+    console.error("Error in ProductsPageContent:", error);
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -146,11 +172,12 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
         <div className="lg:col-span-3">
           <Alert variant="destructive">
             <AlertDescription>
-              Unable to load products from database. Please check your database connection.
+              Unable to load products from database. Please check your database
+              connection.
             </AlertDescription>
           </Alert>
         </div>
       </div>
-    )
+    );
   }
 }

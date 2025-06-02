@@ -1,24 +1,34 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import type { IProduct } from "@/lib/models/Product"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { IProduct } from "@/lib/models/Product";
 
 interface EditProductFormProps {
-  product: IProduct
-  onSuccess: () => void
-  onCancel: () => void
+  product: IProduct;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
-export function EditProductForm({ product, onSuccess, onCancel }: EditProductFormProps) {
+export function EditProductForm({
+  product,
+  onSuccess,
+  onCancel,
+}: EditProductFormProps) {
   const [formData, setFormData] = useState({
     name: product.name,
     description: product.description,
@@ -29,19 +39,42 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
     featured: product.featured,
     sku: product.sku || "",
     tags: product.tags?.join(", ") || "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const categories = ["Electronics", "Clothing", "Home", "Sports", "Books", "Beauty", "Toys", "Automotive"]
+  // const categories = ["Electronics", "Clothing", "Home", "Sports", "Books", "Beauty", "Toys", "Automotive"]
+
+  const [categories, setCategories] = useState<string[]>([]);
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(
+        "/api/categories?limit=100&includeProductCount=false"
+      );
+      const data = await response.json();
+
+      const names = data.categories
+        .filter((cat: any) => cat.isActive && typeof cat.name === "string")
+        .map((cat: any) => cat.name);
+
+      setCategories(names);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
-      console.log("Updating product with ID:", product._id)
+      console.log("Updating product with ID:", product._id);
 
       const productData = {
         name: formData.name,
@@ -58,9 +91,9 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
               .map((tag) => tag.trim())
               .filter(Boolean)
           : [],
-      }
+      };
 
-      console.log("Sending product data:", productData)
+      console.log("Sending product data:", productData);
 
       const response = await fetch(`/api/products/${product._id}`, {
         method: "PATCH",
@@ -68,30 +101,34 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
           "Content-Type": "application/json",
         },
         body: JSON.stringify(productData),
-      })
+      });
 
-      console.log("Response status:", response.status)
+      console.log("Response status:", response.status);
 
       if (response.ok) {
-        const updatedProduct = await response.json()
-        console.log("Product updated successfully:", updatedProduct)
-        onSuccess()
+        const updatedProduct = await response.json();
+        console.log("Product updated successfully:", updatedProduct);
+        onSuccess();
       } else {
-        const errorData = await response.json()
-        console.error("Update failed:", errorData)
-        setError(errorData.error || `Failed to update product (${response.status})`)
+        const errorData = await response.json();
+        console.error("Update failed:", errorData);
+        setError(
+          errorData.error || `Failed to update product (${response.status})`
+        );
       }
     } catch (error) {
-      console.error("Error updating product:", error)
-      setError("An error occurred while updating the product. Please check your connection and try again.")
+      console.error("Error updating product:", error);
+      setError(
+        "An error occurred while updating the product. Please check your connection and try again."
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -166,7 +203,10 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
 
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => handleInputChange("category", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -221,7 +261,7 @@ export function EditProductForm({ product, onSuccess, onCancel }: EditProductFor
         </Button>
       </div>
     </form>
-  )
+  );
 }
 
-export default EditProductForm
+export default EditProductForm;

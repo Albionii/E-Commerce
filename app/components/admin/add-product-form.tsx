@@ -1,18 +1,24 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddProductFormProps {
-  onSuccess: () => void
+  onSuccess: () => void;
 }
 
 export function AddProductForm({ onSuccess }: AddProductFormProps) {
@@ -26,24 +32,52 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
     featured: false,
     sku: "",
     tags: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const categories = ["Electronics", "Clothing", "Home", "Sports", "Books", "Beauty", "Toys", "Automotive"]
+  // const categories = ["Electronics", "Clothing", "Home", "Sports", "Books", "Beauty", "Toys", "Automotive"]
+  const [categories, setCategories] = useState<string[]>([]);
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(
+        "/api/categories?limit=100&includeProductCount=false"
+      );
+      const data = await response.json();
+
+      const names = data.categories
+        .filter((cat: any) => cat.isActive && typeof cat.name === "string")
+        .map((cat: any) => cat.name);
+
+      setCategories(names);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    console.log("Categories State ----> [] " + categories);
+  }, [categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
       const productData = {
         ...formData,
         price: Number.parseFloat(formData.price),
         stock: Number.parseInt(formData.stock),
-        tags: formData.tags ? formData.tags.split(",").map((tag) => tag.trim()) : [],
-      }
+        tags: formData.tags
+          ? formData.tags.split(",").map((tag) => tag.trim())
+          : [],
+      };
 
       const response = await fetch("/api/products", {
         method: "POST",
@@ -51,10 +85,10 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(productData),
-      })
+      });
 
       if (response.ok) {
-        onSuccess()
+        onSuccess();
         // Reset form
         setFormData({
           name: "",
@@ -66,21 +100,21 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
           featured: false,
           sku: "",
           tags: "",
-        })
+        });
       } else {
-        const data = await response.json()
-        setError(data.error || "Failed to create product")
+        const data = await response.json();
+        setError(data.error || "Failed to create product");
       }
     } catch (error) {
-      setError("An error occurred while creating the product")
+      setError("An error occurred while creating the product");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -155,7 +189,10 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => handleInputChange("category", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -210,5 +247,5 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
         </Button>
       </div>
     </form>
-  )
+  );
 }
