@@ -14,7 +14,6 @@ interface ProductsPageProps {
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  console.log("Products page rendering with searchParams:", searchParams)
 
   return (
     <div className="min-h-screen bg-background">

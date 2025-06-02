@@ -18,7 +18,7 @@ interface ProductsPageContentProps {
 
 export async function ProductsPageContent({ searchParams }: ProductsPageContentProps) {
   try {
-    console.log("ProductsPageContent rendering with searchParams:", searchParams)
+
 
     const page = Number(searchParams.page) || 1
     const limit = 12
@@ -38,7 +38,6 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
       sort,
     }
 
-    console.log("Fetching products with filters:", filters)
 
     const { getAllProducts, getCategories } = await import("@/lib/database/products")
 
@@ -55,12 +54,6 @@ export async function ProductsPageContent({ searchParams }: ProductsPageContentP
 
     const { products, total, pages } = productsResult
 
-    console.log("Products fetched successfully:", {
-      productsCount: products.length,
-      total,
-      pages,
-      categoriesCount: categories.length,
-    })
 
     const serializedProducts = products.map((product: any) => ({
       id: product._id.toString(),

@@ -11,12 +11,13 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category") || undefined
     const featured = searchParams.get("featured") === "true" ? true : undefined
     const search = searchParams.get("search") || undefined
+    const excludeId = searchParams.get("excludeId") || undefined
 
     console.log("Products API params:", { page, limit, category, featured, search })
 
     const { getAllProducts } = await import("@/lib/database/products")
 
-    const result = await getAllProducts({ page, limit, category, featured, search })
+    const result = await getAllProducts({ page, limit, category, featured, search, excludeId })
     console.log("Products fetched successfully, count:", result.products.length)
 
     return NextResponse.json(result)

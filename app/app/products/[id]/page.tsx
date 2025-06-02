@@ -4,6 +4,7 @@ import { ProductDetails } from "@/components/products/product-details"
 import { Navbar } from "@/components/layout/navbar"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { getAllProducts } from "@/lib/database/products";
 
 interface ProductPageProps {
   params: {
@@ -13,6 +14,8 @@ interface ProductPageProps {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const [product, session] = await Promise.all([getProductById(params.id), getServerSession(authOptions)])
+
+
 
   if (!product) {
     notFound()
@@ -32,6 +35,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
   }
+
+  
 
   return (
     <div className="min-h-screen bg-background">
