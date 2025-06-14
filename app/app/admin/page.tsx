@@ -14,7 +14,6 @@ export default async function AdminPage() {
     <>
         <Navbar/>
         <AdminDashboard />
-
     </>
   ) 
   

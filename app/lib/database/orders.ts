@@ -1,6 +1,7 @@
 import connectDB from "@/lib/mongodb"
 import Product, { type IProduct } from "@/lib/models/Product"
 import mongoose from "mongoose"
+import Order from "@/lib/models/Order"
 
 export async function createProduct(productData: Partial<IProduct>) {
   try {
@@ -35,6 +36,28 @@ export async function getProductById(id: string): Promise<IProduct | null> {
     throw error
   }
 }
+
+export async function getTotalRevenue(): Promise<number> {
+  try {
+    const result = await Order.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$total" },
+        },
+      },
+    ])
+
+    return result[0]?.totalRevenue || 0
+  } catch (error) {
+    console.error("Error calculating total revenue:", error)
+    throw error
+  }
+}
+
+
+
+
 
 export async function getAllProducts(
   filters: {

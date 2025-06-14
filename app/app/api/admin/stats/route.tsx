@@ -3,8 +3,6 @@ import { verifySession } from "@/lib/dal"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("Admin stats route called")
-
     const session = await verifySession()
     console.log("Session verified:", { userId: session.userId, role: session.role })
 
@@ -14,10 +12,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Import here to avoid early connection issues
-    const { getOrderStats } = await import("@/lib/database/orders")
+    const { getTotalRevenue } = await import("@/lib/database/orders")
 
     console.log("Fetching order stats...")
-    const stats = await getOrderStats()
+    const stats = await getTotalRevenue()
     console.log("Stats fetched successfully:", stats)
 
     return NextResponse.json(stats)
