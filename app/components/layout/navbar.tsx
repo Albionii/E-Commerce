@@ -27,7 +27,7 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="text-xl font-bold text-gray-900">
-              E-Commerce
+              Bubi-Commerce
             </Link>
           </div>
 

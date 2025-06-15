@@ -8,7 +8,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "E-Commerce App",
+  title: "Bubi-Commerce",
   description: "A modern e-commerce application built with Next.js",
 }
 

@@ -480,7 +480,7 @@ export function ProductDetails({ product, userRole }: ProductDetailsProps) {
           </div>
         </div>
       </div>
-      {products && (
+      {products.length > 0 && (
         <section className="">
           <h2 className="text-xl font-bold mb-4 mt-20">Related Products</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
