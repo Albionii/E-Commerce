@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddCategoryFormProps {
-  onSuccess: () => void
-  onCancel: () => void
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
 export function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
@@ -19,21 +19,47 @@ export function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
     name: "",
     description: "",
     isActive: true,
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+  };
+
+  const validateForm = () => {
+    const trimmedName = formData.name.trim();
+    const trimmedDescription = formData.description.trim();
+
+    if (!trimmedName) {
+      setError("Category name is required.");
+      return false;
+    }
+    if (trimmedName.length < 3 || trimmedName.length > 50) {
+      setError("Category name must be between 3 and 50 characters.");
+      return false;
+    }
+    if (trimmedDescription.length > 500) {
+      setError("Description must not exceed 500 characters.");
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setError("");
+    if (!validateForm()) return;
+
+    setIsLoading(true);
 
     try {
       const categoryData = {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
         isActive: formData.isActive,
-      }
+      };
 
       const response = await fetch("/api/categories", {
         method: "POST",
@@ -41,29 +67,25 @@ export function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(categoryData),
-      })
+      });
 
       if (response.ok) {
-        onSuccess()
+        onSuccess();
         setFormData({
           name: "",
           description: "",
           isActive: true,
-        })
+        });
       } else {
-        const data = await response.json()
-        setError(data.error || "Failed to create category")
+        const data = await response.json();
+        setError(data.error || "Failed to create category.");
       }
-    } catch (error) {
-      setError("An error occurred while creating the category")
+    } catch {
+      setError("An error occurred while creating the category.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,7 +102,6 @@ export function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
           value={formData.name}
           onChange={(e) => handleInputChange("name", e.target.value)}
           placeholder="Enter category name"
-          required
         />
       </div>
 
@@ -101,6 +122,7 @@ export function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
           checked={formData.isActive}
           onCheckedChange={(checked) => handleInputChange("isActive", checked)}
         />
+
         <Label htmlFor="isActive">Active Category</Label>
       </div>
 
@@ -113,5 +135,5 @@ export function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
         </Button>
       </div>
     </form>
-  )
+  );
 }

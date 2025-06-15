@@ -68,11 +68,70 @@ export function EditProductForm({
     fetchCategories();
   }, []);
 
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
+      setError("Product name is required.");
+      return false;
+    }
+
+    if (!formData.description.trim()) {
+      setError("Description is required.");
+      return false;
+    }
+
+    if (!formData.price.trim()) {
+      setError("Price is required");
+      return false;
+    }
+
+    const parsedPrice = parseFloat(formData.price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      setError("Price must be a valid non-negative number.");
+      return false;
+    }
+
+    if (!formData.stock.trim()) {
+      setError("Stock quantity is required");
+      return false;
+    }
+
+    const parsedStock = parseInt(formData.stock);
+    if (isNaN(parsedStock) || parsedStock < 0) {
+      setError("Stock must be a valid non-negative integer.");
+      return false;
+    }
+
+    if (!formData.category.trim()) {
+      setError("Category is required");
+      return false;
+    }
+
+    if (!formData.image.trim()) {
+      setError("Image URL is required");
+      return false;
+    }
+
+    try {
+      new URL(formData.image);
+    } catch {
+      setError("Image must be a valid URL.");
+      return false;
+    }
+
+    if (formData.sku && !/^\d+$/.test(formData.sku)) {
+      setError("SKU must contain digits only.");
+      return false;
+    }
+
+    setError("");
+    return true;
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
     setIsLoading(true);
     setError("");
-
     try {
       console.log("Updating product with ID:", product._id);
 
@@ -146,7 +205,6 @@ export function EditProductForm({
             value={formData.name}
             onChange={(e) => handleInputChange("name", e.target.value)}
             placeholder="Enter product name"
-            required
           />
         </div>
 
@@ -169,7 +227,6 @@ export function EditProductForm({
           onChange={(e) => handleInputChange("description", e.target.value)}
           placeholder="Enter product description"
           rows={3}
-          required
         />
       </div>
 
@@ -184,7 +241,6 @@ export function EditProductForm({
             value={formData.price}
             onChange={(e) => handleInputChange("price", e.target.value)}
             placeholder="0.00"
-            required
           />
         </div>
 
@@ -197,7 +253,6 @@ export function EditProductForm({
             value={formData.stock}
             onChange={(e) => handleInputChange("stock", e.target.value)}
             placeholder="0"
-            required
           />
         </div>
 
@@ -229,7 +284,6 @@ export function EditProductForm({
           value={formData.image}
           onChange={(e) => handleInputChange("image", e.target.value)}
           placeholder="https://example.com/image.jpg"
-          required
         />
       </div>
 

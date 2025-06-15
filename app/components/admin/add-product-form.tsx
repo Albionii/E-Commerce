@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +32,12 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
     sku: "",
     tags: "",
   });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // const categories = ["Electronics", "Clothing", "Home", "Sports", "Books", "Beauty", "Toys", "Automotive"]
   const [categories, setCategories] = useState<string[]>([]);
+
   const fetchCategories = async () => {
     try {
       const response = await fetch(
@@ -60,20 +60,85 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    console.log("Categories State ----> [] " + categories);
-  }, [categories]);
+
+    
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
+      setError("Product name is required.");
+      return false;
+    }
+
+    if (!formData.description.trim()) {
+      setError("Description is required.");
+      return false;
+    }
+
+    if (!formData.price.trim()) {
+      setError("Price is required");
+      return false;
+    }
+
+    const parsedPrice = parseFloat(formData.price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      setError("Price must be a valid non-negative number.");
+      return false;
+    }
+
+    if (!formData.stock.trim()) {
+      setError("Stock quantity is required");
+      return false;
+    }
+
+    const parsedStock = parseInt(formData.stock);
+    if (isNaN(parsedStock) || parsedStock < 0) {
+      setError("Stock must be a valid non-negative integer.");
+      return false;
+    }
+
+    if (!formData.category.trim()) {
+      setError("Category is required");
+      return false;
+    }
+
+    if (!formData.image.trim()) {
+      setError("Image URL is required");
+      return false;
+    }
+
+    try {
+      new URL(formData.image);
+    } catch {
+      setError("Image must be a valid URL.");
+      return false;
+    }
+
+    if (formData.sku && !/^\d+$/.test(formData.sku)) {
+      setError("SKU must contain digits only.");
+      return false;
+    }
+
+    setError("");
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setIsLoading(true);
     setError("");
 
     try {
       const productData = {
         ...formData,
-        price: Number.parseFloat(formData.price),
-        stock: Number.parseInt(formData.stock),
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
         tags: formData.tags
           ? formData.tags.split(",").map((tag) => tag.trim())
           : [],
@@ -89,7 +154,6 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
 
       if (response.ok) {
         onSuccess();
-        // Reset form
         setFormData({
           name: "",
           description: "",
@@ -103,17 +167,14 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
         });
       } else {
         const data = await response.json();
-        setError(data.error || "Failed to create product");
+        setError(data.error || "Failed to create product.");
       }
-    } catch (error) {
-      setError("An error occurred while creating the product");
+    } catch (err) {
+      console.error("Create product error:", err);
+      setError("An error occurred while creating the product. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -132,7 +193,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
             value={formData.name}
             onChange={(e) => handleInputChange("name", e.target.value)}
             placeholder="Enter product name"
-            required
+            
           />
         </div>
 
@@ -142,7 +203,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
             id="sku"
             value={formData.sku}
             onChange={(e) => handleInputChange("sku", e.target.value)}
-            placeholder="Enter SKU (optional)"
+            placeholder="Only numbers"
           />
         </div>
       </div>
@@ -155,7 +216,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
           onChange={(e) => handleInputChange("description", e.target.value)}
           placeholder="Enter product description"
           rows={3}
-          required
+          
         />
       </div>
 
@@ -170,7 +231,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
             value={formData.price}
             onChange={(e) => handleInputChange("price", e.target.value)}
             placeholder="0.00"
-            required
+            
           />
         </div>
 
@@ -183,7 +244,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
             value={formData.stock}
             onChange={(e) => handleInputChange("stock", e.target.value)}
             placeholder="0"
-            required
+            
           />
         </div>
 
@@ -215,7 +276,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
           value={formData.image}
           onChange={(e) => handleInputChange("image", e.target.value)}
           placeholder="https://example.com/image.jpg"
-          required
+          
         />
       </div>
 

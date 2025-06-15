@@ -184,7 +184,6 @@ export function CategoryManagement() {
       </CardHeader>
 
       <CardContent>
-        {/* Search */}
         <form onSubmit={handleSearch} className="mb-6">
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -270,7 +269,6 @@ export function CategoryManagement() {
               </TableBody>
             </Table>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center space-x-2 mt-4">
                 <Button variant="outline" onClick={() => setPage(page - 1)} disabled={page <= 1}>
@@ -288,7 +286,6 @@ export function CategoryManagement() {
         )}
       </CardContent>
 
-      {/* Edit Category Dialog */}
       <Dialog open={!!editingCategory} onOpenChange={() => setEditingCategory(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -305,7 +302,6 @@ export function CategoryManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Category Confirmation */}
       <AlertDialog open={!!deletingCategory} onOpenChange={() => setDeletingCategory(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
