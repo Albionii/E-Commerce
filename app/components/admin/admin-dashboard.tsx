@@ -82,7 +82,7 @@ export function AdminDashboard() {
           totalProducts: productsData.total || 0,
           totalUsers: usersData.total || 0,
           totalOrders: ordersData.total || 0,
-          totalRevenue,
+          totalRevenue: totalRevenue || 0,
         });
 
         console.log("Final stats set:", {
@@ -208,13 +208,13 @@ export function AdminDashboard() {
 
           <TabsContent value="categories">
             <Suspense fallback={<div>Loading categories...</div>}>
-              <CategoryManagement />
+              {/* <CategoryManagement /> */}
             </Suspense>
           </TabsContent>
 
           <TabsContent value="orders">
             <Suspense fallback={<div>Loading orders...</div>}>
-              <OrderManagement />
+              {/* <OrderManagement /> */}
             </Suspense>
           </TabsContent>
 
@@ -226,7 +226,7 @@ export function AdminDashboard() {
 
           <TabsContent value="contacts">
             <Suspense fallback={<div>Loading contacts...</div>}>
-              <ContactManagement />
+              {/* <ContactManagement /> */}
             </Suspense>
           </TabsContent>
         </Tabs>
