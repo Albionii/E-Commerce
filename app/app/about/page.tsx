@@ -92,32 +92,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Team Section */}
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Team</h2>
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                Meet the passionate individuals behind our success.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                { name: "Sarah Johnson", role: "CEO & Co-Founder" },
-                { name: "Michael Chen", role: "CTO & Co-Founder" },
-                { name: "Emily Rodriguez", role: "Head of Design" },
-                { name: "David Kim", role: "VP of Engineering" },
-              ].map((member) => (
-                <div key={member.name} className="bg-white p-6 rounded-lg shadow-md text-center">
-                  <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
-                  <h3 className="text-lg font-semibold text-gray-900">{member.name}</h3>
-                  <p className="text-gray-600">{member.role}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+       
 
         {/* CTA Section */}
         <section className="py-16 bg-blue-600 text-white">

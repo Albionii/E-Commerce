@@ -18,8 +18,10 @@ export default async function ProfilePage() {
     redirect("/login?callbackUrl=/profile")
   }
 
+  
   const userId = session.user.id
   const user = await getUserById(userId)
+
 
   if (!user) {
     redirect("/login")
