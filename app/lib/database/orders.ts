@@ -22,7 +22,6 @@ export async function getProductById(id: string): Promise<IProduct | null> {
     console.log("Fetching product by ID:", id)
     await connectDB()
 
-    // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log("Invalid ObjectId format:", id)
       return null

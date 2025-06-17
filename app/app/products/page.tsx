@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { ProductsPageContent } from "@/components/products/products-page-content"
 import { Navbar } from "@/components/layout/navbar"
+import { Footer } from "@/components/layout/footer"
 
 interface ProductsPageProps {
   searchParams: {
@@ -29,6 +30,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <ProductsPageContent searchParams={searchParams} />
         </Suspense>
       </div>
+      <Footer />
     </div>
   )
 }

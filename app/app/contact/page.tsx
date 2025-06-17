@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/layout/navbar"
 import { ContactFormWorking } from "@/components/contact/contact-form-working"
 import type { Metadata } from "next"
+import { Footer } from "@/components/layout/footer"
 
 export const metadata: Metadata = {
   title: "Contact Us - E-Commerce App",
@@ -112,6 +113,7 @@ export default function ContactPage() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   )
 }

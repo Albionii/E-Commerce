@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getAllProducts } from "@/lib/database/products";
+import { Footer } from "@/components/layout/footer"
 
 interface ProductPageProps {
   params: {
@@ -44,6 +45,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ProductDetails product={serializedProduct} userRole={session?.user?.role || null} />
       </div>
+      <Footer />
     </div>
   )
 }

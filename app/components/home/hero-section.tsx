@@ -13,9 +13,7 @@ export function HeroSection() {
           <Button asChild size="lg" variant="secondary">
             <Link href="/products">Shop Now</Link>
           </Button>
-          <Button asChild size="lg" variant="secondary">
-            <Link href="/products">Learn More</Link>
-          </Button>
+
         </div>
       </div>
     </section>

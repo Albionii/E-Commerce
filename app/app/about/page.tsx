@@ -1,3 +1,4 @@
+import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import type { Metadata } from "next"
 
@@ -136,6 +137,7 @@ export default function AboutPage() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   )
 }

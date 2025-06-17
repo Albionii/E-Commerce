@@ -3,6 +3,7 @@ import { ProductsGrid } from "@/components/products/products-grid"
 import { HeroSection } from "@/components/home/hero-section"
 import { Navbar } from "@/components/layout/navbar"
 import { getFeaturedProducts } from "@/lib/database/products"
+import { Footer } from "@/components/layout/footer"
 
 export default async function HomePage() {
   const featuredProductsData = await getFeaturedProducts();
@@ -31,6 +32,7 @@ export default async function HomePage() {
           <ProductsGrid products={featuredProducts} />
         </Suspense>
       </section>
+      <Footer />
     </div>
   );
 }
