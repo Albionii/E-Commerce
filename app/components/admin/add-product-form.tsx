@@ -1,5 +1,6 @@
-"use client";
+"use client"
 
+<<<<<<< Updated upstream
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,21 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+=======
+import type React from "react"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+>>>>>>> Stashed changes
 
 interface AddProductFormProps {
-  onSuccess: () => void;
+  onSuccess: () => void
 }
 
 export function AddProductForm({ onSuccess }: AddProductFormProps) {
@@ -31,6 +44,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
     featured: false,
     sku: "",
     tags: "",
+<<<<<<< Updated upstream
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -133,16 +147,35 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
 
     setIsLoading(true);
     setError("");
+=======
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const categories = ["Electronics", "Clothing", "Home", "Sports", "Books", "Beauty", "Toys", "Automotive"]
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+>>>>>>> Stashed changes
 
     try {
       const productData = {
         ...formData,
+<<<<<<< Updated upstream
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
         tags: formData.tags
           ? formData.tags.split(",").map((tag) => tag.trim())
           : [],
       };
+=======
+        price: Number.parseFloat(formData.price),
+        stock: Number.parseInt(formData.stock),
+        tags: formData.tags ? formData.tags.split(",").map((tag) => tag.trim()) : [],
+      }
+>>>>>>> Stashed changes
 
       const response = await fetch("/api/products", {
         method: "POST",
@@ -150,10 +183,15 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(productData),
-      });
+      })
 
       if (response.ok) {
+<<<<<<< Updated upstream
         onSuccess();
+=======
+        onSuccess()
+        // Reset form
+>>>>>>> Stashed changes
         setFormData({
           name: "",
           description: "",
@@ -164,19 +202,34 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
           featured: false,
           sku: "",
           tags: "",
-        });
+        })
       } else {
+<<<<<<< Updated upstream
         const data = await response.json();
         setError(data.error || "Failed to create product.");
       }
     } catch (err) {
       console.error("Create product error:", err);
       setError("An error occurred while creating the product. Please try again.");
+=======
+        const data = await response.json()
+        setError(data.error || "Failed to create product")
+      }
+    } catch (error) {
+      setError("An error occurred while creating the product")
+>>>>>>> Stashed changes
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
+<<<<<<< Updated upstream
+=======
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+>>>>>>> Stashed changes
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -250,10 +303,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(value) => handleInputChange("category", value)}
-          >
+          <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -308,5 +358,5 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
         </Button>
       </div>
     </form>
-  );
+  )
 }
