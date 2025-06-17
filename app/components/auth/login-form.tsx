@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn, getSession } from "next-auth/react"
@@ -27,37 +26,27 @@ export function LoginForm() {
     setError("")
 
     try {
-      console.log("Attempting login with:", { email })
-
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       })
 
-      console.log("Sign in result:", result)
-
       if (result?.error) {
-        console.log("Sign in error:", result.error)
-        setError("Invalid credentials")
+        setError("Invalid credentials. Please check your email and password.")
       } else if (result?.ok) {
-        console.log("Sign in successful, getting session...")
-
         await new Promise((resolve) => setTimeout(resolve, 100))
-
         const session = await getSession()
-        console.log("Session after login:", session)
 
         if (session?.user?.role === "admin") {
-          router.push("/")
+          router.push("/admin")
         } else {
-          router.push("/")
+          router.push("/dashboard")
         }
 
         router.refresh()
       }
     } catch (error) {
-      console.error("Login error:", error)
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -69,33 +58,15 @@ export function LoginForm() {
     setError("")
 
     try {
-      console.log("Attempting Google sign in...")
-
       const result = await signIn("google", {
-        redirect: false,
+        callbackUrl: "/dashboard",
+        redirect: true,
       })
 
-      console.log("Google sign in result:", result)
-
       if (result?.error) {
-        console.log("Google sign in error:", result.error)
-        setError("Google sign-in failed")
-      } else if (result?.ok) {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
-        const session = await getSession()
-        console.log("Session after Google login:", session)
-
-        if (session?.user?.role === "admin") {
-          router.push("/")
-        } else {
-          router.push("/")
-        }
-
-        router.refresh()
+        setError("Google sign-in failed. Please try again.")
       }
     } catch (error) {
-      console.error("Google sign-in error:", error)
       setError("An error occurred with Google sign-in")
     } finally {
       setIsGoogleLoading(false)
@@ -161,7 +132,14 @@ export function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
           </div>
 
           <div className="space-y-2">
@@ -171,6 +149,7 @@ export function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
               required
             />
           </div>

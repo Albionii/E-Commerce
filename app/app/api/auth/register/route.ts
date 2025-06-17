@@ -1,37 +1,52 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createUser } from "@/lib/database/users"
-import { createSession } from "@/lib/session"
+import { createUser, getUserByEmail } from "@/lib/database/users"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, role = "user" } = await request.json()
+    const { email, password, name } = await request.json()
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Email, password, and name are required" }, { status: 400 })
     }
 
     if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
+      return NextResponse.json({ error: "Password must be at least 6 characters long" }, { status: 400 })
     }
 
-    const user = await createUser({ email, password, name, role })
+    const existingUser = await getUserByEmail(email)
+    if (existingUser) {
+      return NextResponse.json({ error: "User with this email already exists" }, { status: 400 })
+    }
 
-    await createSession(user._id.toString(), user.email, user.role)
-
-    return NextResponse.json({
-      message: "Registration successful",
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
+    const newUser = await createUser({
+      email,
+      password,
+      name,
+      role: "user",
+      authProvider: "credentials",
     })
-  } catch (error: any) {
-    console.error("Registration error:", error)
 
-    if (error.code === 11000) {
-      return NextResponse.json({ error: "Email already exists" }, { status: 400 })
+    return NextResponse.json(
+      {
+        message: "User created successfully",
+        user: {
+          id: newUser._id,
+          email: newUser.email,
+          name: newUser.name,
+          role: newUser.role,
+        },
+      },
+      { status: 201 },
+    )
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes("duplicate key error")) {
+        return NextResponse.json({ error: "User with this email already exists" }, { status: 400 })
+      }
+
+      if (error.message.includes("validation failed")) {
+        return NextResponse.json({ error: "Invalid user data provided" }, { status: 400 })
+      }
     }
 
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs"
 export interface IUser extends Document {
   _id: string
   email: string
-  password: string
+  password?: string
   name: string
   role: "user" | "admin"
   phone?: string
@@ -14,6 +14,8 @@ export interface IUser extends Document {
     state?: string
     zipCode?: string
   }
+  googleId?: string
+  authProvider?: "credentials" | "google"
   createdAt: Date
   updatedAt: Date
   comparePassword(candidatePassword: string): Promise<boolean>
@@ -24,7 +26,6 @@ const UserSchema = new Schema<IUser>(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,
       lowercase: true,
       trim: true,
       validate: {
@@ -34,9 +35,7 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: function (this: IUser) {
-        return this.password !== ""
-      },
+      required: false,
       minlength: [6, "Password must be at least 6 characters"],
     },
     name: {
@@ -60,6 +59,14 @@ const UserSchema = new Schema<IUser>(
       state: String,
       zipCode: String,
     },
+    googleId: {
+      type: String,
+    },
+    authProvider: {
+      type: String,
+      enum: ["credentials", "google"],
+      default: "google",
+    },
   },
   {
     timestamps: true,
@@ -67,18 +74,21 @@ const UserSchema = new Schema<IUser>(
 )
 
 UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password") || !this.password) return next()
-
-  try {
-    console.log("Hashing password...")
-    const salt = await bcrypt.genSalt(12)
-    this.password = await bcrypt.hash(this.password, salt)
-    console.log("Password hashed successfully")
-    next()
-  } catch (error: any) {
-    console.error("Error hashing password:", error)
-    next(error)
+  if (this.authProvider === "credentials" && !this.password) {
+    const error = new Error("Password is required for credentials users")
+    return next(error)
   }
+
+  if (this.isModified("password") && this.password) {
+    try {
+      const salt = await bcrypt.genSalt(12)
+      this.password = await bcrypt.hash(this.password, salt)
+    } catch (error: any) {
+      return next(error)
+    }
+  }
+
+  next()
 })
 
 UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
@@ -91,5 +101,8 @@ UserSchema.methods.toJSON = function () {
   delete userObject.password
   return userObject
 }
+
+UserSchema.index({ email: 1 }, { unique: true })
+UserSchema.index({ googleId: 1 }, { sparse: true })
 
 export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema)

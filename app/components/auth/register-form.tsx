@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -18,6 +17,7 @@ export function RegisterForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
@@ -26,6 +26,7 @@ export function RegisterForm() {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    setSuccess("")
 
     try {
       const response = await fetch("/api/auth/register", {
@@ -34,7 +35,11 @@ export function RegisterForm() {
         body: JSON.stringify({ email, password, name }),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
+        setSuccess("Account created successfully! Signing you in...")
+
         const result = await signIn("credentials", {
           email,
           password,
@@ -42,13 +47,12 @@ export function RegisterForm() {
         })
 
         if (result?.error) {
-          setError("Registration successful but login failed. Please try logging in.")
+          setError("Registration successful but login failed. Please try logging in manually.")
         } else {
           router.push("/dashboard")
         }
       } else {
-        const data = await response.json()
-        setError(data.error || "Registration failed")
+        setError(data.error || "Registration failed. Please try again.")
       }
     } catch (error) {
       setError("An error occurred. Please try again.")
@@ -64,14 +68,14 @@ export function RegisterForm() {
     try {
       const result = await signIn("google", {
         callbackUrl: "/dashboard",
+        redirect: true,
       })
 
       if (result?.error) {
-        setError("Google sign-in failed")
+        setError("Google sign-up failed. Please try again.")
       }
     } catch (error) {
-      console.error("Google sign-in error:", error)
-      setError("An error occurred with Google sign-in")
+      setError("An error occurred with Google sign-up")
     } finally {
       setIsGoogleLoading(false)
     }
@@ -87,6 +91,12 @@ export function RegisterForm() {
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {success && (
+          <Alert>
+            <AlertDescription>{success}</AlertDescription>
           </Alert>
         )}
 
@@ -143,6 +153,7 @@ export function RegisterForm() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your full name"
               required
+              minLength={2}
             />
           </div>
 

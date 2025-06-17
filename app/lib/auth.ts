@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { authenticateUser, getUserByEmail, createUser } from "@/lib/database/users"
+import { authenticateUser, findOrCreateOAuthUser, getUserByEmail } from "@/lib/database/users"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -17,16 +17,13 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("Missing credentials")
           return null
         }
 
         try {
-          console.log("Authenticating user:", credentials.email)
           const user = await authenticateUser(credentials.email, credentials.password)
 
           if (user) {
-            console.log("User authenticated successfully:", { id: user._id, email: user.email, role: user.role })
             return {
               id: user._id.toString(),
               email: user.email,
@@ -35,10 +32,8 @@ export const authOptions: NextAuthOptions = {
             }
           }
 
-          console.log("Authentication failed for:", credentials.email)
           return null
         } catch (error) {
-          console.error("Auth error:", error)
           return null
         }
       },
@@ -46,58 +41,52 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log("SignIn callback:", { user: user?.email, provider: account?.provider })
-
       if (account?.provider === "google") {
         try {
-          const existingUser = await getUserByEmail(user.email!)
-
-          if (!existingUser) {
-            console.log("Creating new user from Google profile")
-            await createUser({
-              email: user.email!,
-              name: user.name!,
-              password: "", 
-              role: "user",
-            })
-          }
+          await findOrCreateOAuthUser({
+            email: user.email!,
+            name: user.name || "Unknown User",
+            googleId: user.id,
+            role: "user",
+          })
           return true
         } catch (error) {
-          console.error("Error during Google sign in:", error)
-          return false
+          return true
         }
       }
       return true
     },
     async jwt({ token, user, account }) {
-      console.log("JWT callback:", { hasUser: !!user, hasToken: !!token, provider: account?.provider })
-
       if (user) {
         try {
           const dbUser = await getUserByEmail(user.email!)
+
           if (dbUser) {
             token.role = dbUser.role || "user"
             token.userId = dbUser._id.toString()
-            console.log("JWT token updated with user data:", { role: token.role, userId: token.userId })
+            token.email = dbUser.email
+            token.name = dbUser.name
           } else {
             token.role = "user"
-            token.userId = user.id
+            token.email = user.email
+            token.name = user.name
+            token.userId = null
           }
         } catch (error) {
-          console.error("Error in jwt callback:", error)
           token.role = "user"
-          token.userId = user.id
+          token.email = user.email
+          token.name = user.name
+          token.userId = null
         }
       }
       return token
     },
     async session({ session, token }) {
-      console.log("Session callback:", { hasSession: !!session, hasToken: !!token })
-
       if (token && session.user) {
         session.user.id = token.userId as string
         session.user.role = token.role as string
-        console.log("Session updated:", { id: session.user.id, role: session.user.role })
+        session.user.email = token.email as string
+        session.user.name = token.name as string
       }
       return session
     },
