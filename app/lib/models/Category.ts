@@ -38,9 +38,6 @@ const CategorySchema = new Schema<ICategory>(
   },
 )
 
-CategorySchema.index({ name: 1 })
-CategorySchema.index({ slug: 1 })
-CategorySchema.index({ isActive: 1 })
 
 CategorySchema.pre("save", function (next) {
   if (this.isModified("name") || this.isNew) {

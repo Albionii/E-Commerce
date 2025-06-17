@@ -5,7 +5,7 @@ module.exports = {
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   testMatch: ["**/__tests__/**/*.(test|spec).[jt]s?(x)"],
   transform: {
-    "^.+\\.(ts|tsx)$": "ts-jest",
+    "^.+\\.(ts|tsx|js|jsx)$": "ts-jest"
   },
   transformIgnorePatterns: [
     "/node_modules/(?!(your-esm-package)/)"

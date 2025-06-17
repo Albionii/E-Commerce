@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { verifySession } from "@/lib/dal"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await verifySession()
     console.log("Session verified:", { userId: session.userId, role: session.role })
