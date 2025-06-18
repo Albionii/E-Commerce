@@ -1,180 +1,72 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import type React from "react"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import type { ICategory } from "@/lib/models/Category"
 
-interface AddProductFormProps {
-  onSuccess: () => void;
+interface EditCategoryFormProps {
+  category: ICategory
+  onSuccess: () => void
+  onCancel: () => void
 }
 
-export function AddProductForm({ onSuccess }: AddProductFormProps) {
+export function EditCategoryForm({ category, onSuccess, onCancel }: EditCategoryFormProps) {
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category: "",
-    stock: "",
-    image: "",
-    featured: false,
-    sku: "",
-    tags: "",
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const [categories, setCategories] = useState<string[]>([]);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch(
-        "/api/categories?limit=100&includeProductCount=false"
-      );
-      const data = await response.json();
-
-      const names = data.categories
-        .filter((cat: any) => cat.isActive && typeof cat.name === "string")
-        .map((cat: any) => cat.name);
-
-      setCategories(names);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setCategories([]);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const validateForm = (): boolean => {
-    if (!formData.name.trim()) {
-      setError("Product name is required.");
-      return false;
-    }
-
-    if (!formData.description.trim()) {
-      setError("Product description is required.");
-      return false;
-    }
-
-    if (!formData.price.trim()) {
-      setError("Price is required.");
-      return false;
-    }
-
-    const parsedPrice = parseFloat(formData.price);
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
-      setError("Price must be a valid non-negative number.");
-      return false;
-    }
-
-    if (!formData.stock.trim()) {
-      setError("Stock quantity is required.");
-      return false;
-    }
-
-    const parsedStock = parseInt(formData.stock);
-    if (isNaN(parsedStock) || parsedStock < 0) {
-      setError("Stock must be a valid non-negative integer.");
-      return false;
-    }
-
-    if (!formData.category.trim()) {
-      setError("Category is required.");
-      return false;
-    }
-
-    if (!formData.image.trim()) {
-      setError("Image URL is required.");
-      return false;
-    }
-
-    try {
-      new URL(formData.image);
-    } catch {
-      setError("Image must be a valid URL.");
-      return false;
-    }
-
-    if (formData.sku && !/^\d+$/.test(formData.sku)) {
-      setError("SKU must contain digits only.");
-      return false;
-    }
-
-    setError("");
-    return true;
-  };
+    name: category.name,
+    description: category.description || "",
+    isActive: category.isActive,
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    setError("");
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
 
     try {
-      const productData = {
-        ...formData,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
-        tags: formData.tags
-          ? formData.tags.split(",").map((tag) => tag.trim())
-          : [],
-      };
 
-      const response = await fetch("/api/products", {
-        method: "POST",
+      const categoryData = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        isActive: formData.isActive,
+      }
+
+
+      const response = await fetch(`/api/categories/${category._id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(productData),
-      });
+        body: JSON.stringify(categoryData),
+      })
+
 
       if (response.ok) {
-        onSuccess();
-        setFormData({
-          name: "",
-          description: "",
-          price: "",
-          category: "",
-          stock: "",
-          image: "",
-          featured: false,
-          sku: "",
-          tags: "",
-        });
+        const updatedCategory = await response.json()
+        onSuccess()
       } else {
-        const data = await response.json();
-        setError(data.error || "Failed to create product.");
+        const errorData = await response.json()
+        console.error("Update failed:", errorData)
+        setError(errorData.error || `Failed to update category (${response.status})`)
       }
-    } catch (err) {
-      console.error("Create product error:", err);
-      setError(
-        "An error occurred while creating the product. Please try again."
-      );
+    } catch (error) {
+      console.error("Error updating category:", error)
+      setError("An error occurred while updating the category. Please check your connection and try again.")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -184,128 +76,45 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Product Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
-            placeholder="Enter product name"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="sku">SKU</Label>
-          <Input
-            id="sku"
-            value={formData.sku}
-            onChange={(e) => handleInputChange("sku", e.target.value)}
-            placeholder="Only numbers"
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="name">Category Name *</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => handleInputChange("name", e.target.value)}
+          placeholder="Enter category name"
+          required
+        />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description *</Label>
+        <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
           value={formData.description}
           onChange={(e) => handleInputChange("description", e.target.value)}
-          placeholder="Enter product description"
+          placeholder="Enter category description (optional)"
           rows={3}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="price">Price *</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.price}
-            onChange={(e) => handleInputChange("price", e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="stock">Stock Quantity *</Label>
-          <Input
-            id="stock"
-            type="number"
-            min="0"
-            value={formData.stock}
-            onChange={(e) => handleInputChange("stock", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="category">Category *</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(value) => handleInputChange("category", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="image">Image URL *</Label>
-        <Input
-          id="image"
-          type="url"
-          value={formData.image}
-          onChange={(e) => handleInputChange("image", e.target.value)}
-          placeholder="https://example.com/image.jpg"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="tags">Tags (comma-separated)</Label>
-        <Input
-          id="tags"
-          value={formData.tags}
-          onChange={(e) => handleInputChange("tags", e.target.value)}
-          placeholder="tag1, tag2, tag3"
         />
       </div>
 
       <div className="flex items-center space-x-2">
         <Switch
-          id="featured"
-          checked={formData.featured}
-          onCheckedChange={(checked) => handleInputChange("featured", checked)}
+          id="isActive"
+          checked={formData.isActive}
+          onCheckedChange={(checked) => handleInputChange("isActive", checked)}
         />
-        <Label htmlFor="featured">Featured Product</Label>
+        <Label htmlFor="isActive">Active Category</Label>
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="outline" onClick={() => onSuccess()}>
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating..." : "Create Product"}
+          {isLoading ? "Updating..." : "Update Category"}
         </Button>
       </div>
     </form>
-  );
+  )
 }

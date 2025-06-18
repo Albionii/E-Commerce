@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signOut } from "next-auth/react";
 import { ContactManagement } from "./contact-management";
+import { CategoryManagement } from "./category-managment";
 // import { CategoryManagement } from "./category-managment";
 
 interface DashboardStats {
@@ -206,11 +207,11 @@ export function AdminDashboard() {
             </Suspense>
           </TabsContent>
 
-          {/* <TabsContent value="categories">
+          <TabsContent value="categories">
             <Suspense fallback={<div>Loading categories...</div>}>
               <CategoryManagement />
             </Suspense>
-          </TabsContent> */}
+          </TabsContent>
 
           <TabsContent value="orders">
             <Suspense fallback={<div>Loading orders...</div>}>

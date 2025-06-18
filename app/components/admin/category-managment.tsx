@@ -1,11 +1,21 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,42 +26,45 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { IContact } from "@/lib/models/Contact"
-import { Eye, Trash2, Mail, Clock } from "lucide-react"
+import { AddCategoryForm } from "./add-category-form"
+import { EditCategoryForm } from "./edit-category-form"
+import type { ICategory } from "@/lib/models/Category"
+import { Edit, Trash2, Plus, Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
-export function ContactManagement() {
-  const [contacts, setContacts] = useState<IContact[]>([])
+export function CategoryManagement() {
+  const [categories, setCategories] = useState<ICategory[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedContact, setSelectedContact] = useState<IContact | null>(null)
-  const [deletingContact, setDeletingContact] = useState<IContact | null>(null)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<ICategory | null>(null)
+  const [deletingCategory, setDeletingCategory] = useState<ICategory | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const fetchContacts = async () => {
+  const fetchCategories = async () => {
     try {
       setIsLoading(true)
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
+        includeProductCount: "true",
       })
 
-      if (statusFilter !== "all") {
-        params.append("status", statusFilter)
+      if (searchTerm) {
+        params.append("search", searchTerm)
       }
 
-      const response = await fetch(`/api/contacts?${params}`)
+      const response = await fetch(`/api/categories?${params}`)
       const data = await response.json()
-      setContacts(data.contacts)
+      setCategories(data.categories)
       setTotalPages(data.pages)
     } catch (error) {
-      console.error("Error fetching contacts:", error)
+      console.error("Error fetching categories:", error)
       toast({
         title: "Error",
-        description: "Failed to fetch contacts. Please try again.",
+        description: "Failed to fetch categories. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -60,101 +73,78 @@ export function ContactManagement() {
   }
 
   useEffect(() => {
-    fetchContacts()
-  }, [page, statusFilter])
+    fetchCategories()
+  }, [page, searchTerm])
 
-  const handleStatusUpdate = async (contactId: string, newStatus: string) => {
-    try {
-      const response = await fetch(`/api/contacts/${contactId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
-
-      if (response.ok) {
-        fetchContacts()
-        setSelectedContact(null)
-        toast({
-          title: "Success",
-          description: "Contact status updated successfully!",
-        })
-      } else {
-        const errorData = await response.json()
-        toast({
-          title: "Error",
-          description: errorData.error || "Failed to update contact status",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error updating contact status:", error)
-      toast({
-        title: "Error",
-        description: "An error occurred while updating the contact",
-        variant: "destructive",
-      })
-    }
+  const handleCategoryAdded = () => {
+    setIsAddDialogOpen(false)
+    setPage(1) 
+    fetchCategories()
+    toast({
+      title: "Success",
+      description: "Category added successfully!",
+    })
   }
 
-  const handleDeleteContact = async () => {
-    if (!deletingContact) return
+  const handleCategoryUpdated = () => {
+    setEditingCategory(null)
+    fetchCategories()
+    toast({
+      title: "Success",
+      description: "Category updated successfully!",
+    })
+  }
+
+  const handleDeleteCategory = async () => {
+    if (!deletingCategory) return
 
     setIsDeleting(true)
     try {
-      const response = await fetch(`/api/contacts/${deletingContact._id}`, {
+      const response = await fetch(`/api/categories/${deletingCategory._id}`, {
         method: "DELETE",
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        fetchContacts()
+        fetchCategories()
         toast({
           title: "Success",
-          description: "Contact deleted successfully!",
+          description: "Category deleted successfully!",
         })
       } else {
-        const errorData = await response.json()
+        console.error("Delete failed:", data)
         toast({
           title: "Error",
-          description: errorData.error || "Failed to delete contact",
+          description: data.error || `Failed to delete category (${response.status})`,
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Error deleting contact:", error)
+      console.error("Error deleting category:", error)
       toast({
         title: "Error",
-        description: "An error occurred while deleting the contact",
+        description: "An error occurred while deleting the category",
         variant: "destructive",
       })
     } finally {
       setIsDeleting(false)
-      setDeletingContact(null)
+      setDeletingCategory(null)
     }
   }
 
-  const getStatusColor = (status: IContact["status"]) => {
-    switch (status) {
-      case "new":
-        return "bg-blue-100 text-blue-800"
-      case "read":
-        return "bg-yellow-100 text-yellow-800"
-      case "replied":
-        return "bg-green-100 text-green-800"
-      case "closed":
-        return "bg-gray-100 text-gray-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setPage(1)
+    fetchCategories()
   }
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Contact Management</CardTitle>
-          <CardDescription>Loading contacts...</CardDescription>
+          <CardTitle>Category Management</CardTitle>
+          <CardDescription>Loading categories...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -172,30 +162,65 @@ export function ContactManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Contact Management</CardTitle>
-            <CardDescription>Manage customer inquiries and messages</CardDescription>
+            <CardTitle>Category Management</CardTitle>
+            <CardDescription>Manage your product categories</CardDescription>
           </div>
-          <div className="flex items-center space-x-2">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="read">Read</SelectItem>
-                <SelectItem value="replied">Replied</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Add New Category</DialogTitle>
+                <DialogDescription>Create a new category for your products</DialogDescription>
+              </DialogHeader>
+              <AddCategoryForm onSuccess={handleCategoryAdded} onCancel={() => setIsAddDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
 
       <CardContent>
-        {contacts.length === 0 ? (
+        {/* Search */}
+        <form onSubmit={handleSearch} className="mb-6">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button type="submit" variant="outline">
+              Search
+            </Button>
+            {searchTerm && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm("")
+                  setPage(1)
+                }}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        </form>
+
+        {categories.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">No contacts found.</p>
+            <p className="text-gray-500">
+              {searchTerm
+                ? "No categories found matching your search."
+                : "No categories found. Add your first category!"}
+            </p>
           </div>
         ) : (
           <>
@@ -203,35 +228,38 @@ export function ContactManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Subject</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Products</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contacts.map((contact) => (
-                  <TableRow key={contact._id}>
-                    <TableCell className="font-medium">{contact.name}</TableCell>
-                    <TableCell>{contact.email}</TableCell>
-                    <TableCell className="max-w-xs truncate">{contact.subject}</TableCell>
+                {categories.map((category) => (
+                  <TableRow key={category._id}>
+                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell className="max-w-xs truncate">{category.description || "No description"}</TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(contact.status)}>
-                        {contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
+                      <Badge variant="secondary">{category.productCount || 0} products</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={category.isActive ? "default" : "secondary"}>
+                        {category.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(contact.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedContact(contact)}>
-                          <Eye className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => setEditingCategory(category)}>
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setDeletingContact(contact)}
+                          onClick={() => setDeletingCategory(category)}
                           className="text-red-600 hover:text-red-700"
+                          disabled={category.productCount > 0}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -260,103 +288,46 @@ export function ContactManagement() {
         )}
       </CardContent>
 
-      {/* Contact Details Modal */}
-      <Dialog open={!!selectedContact} onOpenChange={() => setSelectedContact(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Edit Category Dialog */}
+      <Dialog open={!!editingCategory} onOpenChange={() => setEditingCategory(null)}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Contact Details</DialogTitle>
-            <DialogDescription>Message from {selectedContact?.name}</DialogDescription>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>Update category information</DialogDescription>
           </DialogHeader>
-
-          {selectedContact && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Name</label>
-                  <p className="text-gray-900">{selectedContact.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Email</label>
-                  <p className="text-gray-900">{selectedContact.email}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-600">Subject</label>
-                <p className="text-gray-900">{selectedContact.subject}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-600">Message</label>
-                <div className="bg-gray-50 p-4 rounded-lg mt-1">
-                  <p className="text-gray-900 whitespace-pre-wrap">{selectedContact.message}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">
-                    Received on {new Date(selectedContact.createdAt).toLocaleString()}
-                  </span>
-                </div>
-                <Badge className={getStatusColor(selectedContact.status)}>
-                  {selectedContact.status.charAt(0).toUpperCase() + selectedContact.status.slice(1)}
-                </Badge>
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t">
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      window.open(`mailto:${selectedContact.email}?subject=Re: ${selectedContact.subject}`)
-                    }
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Reply via Email
-                  </Button>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Select
-                    value={selectedContact.status}
-                    onValueChange={(value) => handleStatusUpdate(selectedContact._id, value)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="read">Read</SelectItem>
-                      <SelectItem value="replied">Replied</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
+          {editingCategory && (
+            <EditCategoryForm
+              category={editingCategory}
+              onSuccess={handleCategoryUpdated}
+              onCancel={() => setEditingCategory(null)}
+            />
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Delete Contact Confirmation */}
-      <AlertDialog open={!!deletingContact} onOpenChange={() => setDeletingContact(null)}>
+      {/* Delete Category Confirmation */}
+      <AlertDialog open={!!deletingCategory} onOpenChange={() => setDeletingCategory(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+            <AlertDialogTitle>Delete Category</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this message from "{deletingContact?.name}"? This action cannot be undone.
+              Are you sure you want to delete "{deletingCategory?.name}"? This action cannot be undone.
+              {deletingCategory?.productCount > 0 && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                  <strong>Warning:</strong> This category is being used by {deletingCategory.productCount} product(s).
+                  You cannot delete it until all products are moved to other categories.
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteContact}
-              disabled={isDeleting}
+              onClick={handleDeleteCategory}
+              disabled={isDeleting || (deletingCategory?.productCount || 0) > 0}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isDeleting ? "Deleting..." : "Delete Contact"}
+              {isDeleting ? "Deleting..." : "Delete Category"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
