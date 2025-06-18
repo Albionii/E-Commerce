@@ -1,6 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import Product, { type IProduct } from "@/lib/models/Product";
-import mongoose from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 
 export async function createProduct(productData: Partial<IProduct>) {
   try {
@@ -18,14 +18,17 @@ export async function createProduct(productData: Partial<IProduct>) {
 
 export async function getProductById(id: string): Promise<IProduct | null> {
   try {
+    console.log("Fetching product by ID:", id);
     await connectDB();
-      console.log("ProductId from getProductById -> " + id);
+
+    // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log("Invalid ObjectId format:", id);
       return null;
     }
 
     const product = await Product.findById(id).lean();
+    console.log("Product fetched:", !!product);
     return product;
   } catch (error) {
     console.error("Error fetching product:", error);
@@ -43,12 +46,12 @@ export async function getAllProducts(
     minPrice?: number;
     maxPrice?: number;
     sort?: string;
-    excludeId?: string;
   } = {}
 ) {
   try {
+    console.log("Fetching all products with filters:", filters);
     await connectDB();
-    console.log("Filters: ", filters)
+
     const {
       page = 1,
       limit = 12,
@@ -58,11 +61,11 @@ export async function getAllProducts(
       minPrice,
       maxPrice,
       sort = "newest",
-      excludeId,
     } = filters;
 
     const skip = (page - 1) * limit;
 
+    // Build query
     const query: any = {};
 
     if (category) {
@@ -87,19 +90,9 @@ export async function getAllProducts(
       if (maxPrice !== undefined) query.price.$lte = maxPrice;
     }
 
-    console.log("excludeId: " + excludeId);
-    if (excludeId) {
-      try {
-        console.log(
-          "Converted excludeId:",
-          new mongoose.Types.ObjectId(excludeId)
-        );
-        query._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
-      } catch (e) {
-        console.warn("Invalid excludeId passed:", excludeId);
-      }
-    }
+    console.log("Database query:", query);
 
+    // Build sort
     let sortQuery: any = {};
     switch (sort) {
       case "newest":
@@ -127,10 +120,18 @@ export async function getAllProducts(
         sortQuery = { createdAt: -1 };
     }
 
+    console.log("Sort query:", sortQuery);
+
     const [products, total] = await Promise.all([
       Product.find(query).skip(skip).limit(limit).sort(sortQuery).lean(),
       Product.countDocuments(query),
     ]);
+
+    console.log("Products query result:", {
+      productsCount: products.length,
+      total,
+      pages: Math.ceil(total / limit),
+    });
 
     return {
       products,
@@ -149,13 +150,16 @@ export async function updateProduct(id: string, updateData: Partial<IProduct>) {
     console.log("Updating product:", id, "with data:", updateData);
     await connectDB();
 
+    // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log("Invalid ObjectId format:", id);
       return null;
     }
 
+    // Clean up the update data
     const cleanUpdateData = { ...updateData };
 
+    // Remove undefined values
     Object.keys(cleanUpdateData).forEach((key) => {
       if (cleanUpdateData[key] === undefined) {
         delete cleanUpdateData[key];
@@ -165,8 +169,8 @@ export async function updateProduct(id: string, updateData: Partial<IProduct>) {
     console.log("Clean update data:", cleanUpdateData);
 
     const product = await Product.findByIdAndUpdate(id, cleanUpdateData, {
-      new: true,
-      runValidators: true,
+      new: true, // Return the updated document
+      runValidators: true, // Run schema validators
     });
 
     console.log("Product updated successfully:", !!product);
@@ -176,12 +180,43 @@ export async function updateProduct(id: string, updateData: Partial<IProduct>) {
     throw error;
   }
 }
+export async function decreseMeHere(
+  id: string,
+  amount: number,
+  items: any,
+  session: ClientSession
+) {
+  try {
+    const itemFixed = items.find((item) => item.id === id);
+    await connectDB();
+    let product = await Product.findById(id);
+    amount = itemFixed.quantity;
+    if (product.stock < amount) {
+      console.log("PAK PO LYP TI");
+      return null;
+    }
+    if (!product) {
+      console.log("DOES NOT EXIST");
+      return null;
+    }
+    product.stock -= amount;
+    const updatedProduct = await Product.findByIdAndUpdate(id, product, {
+      new: true,
+      runValidators: true,
+    });
+    return updatedProduct;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 
 export async function deleteProduct(id: string) {
   try {
     console.log("Deleting product:", id);
     await connectDB();
 
+    // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log("Invalid ObjectId format:", id);
       return null;
@@ -227,6 +262,7 @@ export async function updateProductStock(id: string, quantity: number) {
     console.log("Updating product stock:", { id, quantity });
     await connectDB();
 
+    // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log("Invalid ObjectId format:", id);
       return null;
@@ -254,6 +290,24 @@ export async function getCategories() {
     return categories;
   } catch (error) {
     console.error("Error fetching categories:", error);
-    return [];
+    return []; // Return empty array instead of throwing
+  }
+}
+
+export async function getProductsByIds(ids) {
+  try {
+    console.log("Fetching products by IDs...");
+    await connectDB(); // Establish connection to the database
+
+    // Use the $in operator to find all products whose _id is in the provided array
+    const products = await Product.find({
+      _id: { $in: ids },
+    });
+
+    console.log(`Found ${products.length} matching products.`);
+    return products;
+  } catch (error) {
+    console.error("Error fetching products by IDs:", error);
+    return []; // Return an empty array on error to prevent crashes
   }
 }

@@ -8,8 +8,11 @@ import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+
 
 export function CartSidebar() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false)
   const { items, removeItem, updateQuantity, clearCart, getTotalItems, getTotalPrice } = useCartStore()
 
@@ -48,6 +51,7 @@ export function CartSidebar() {
             </div>
           ) : (
             <>
+              {/* Cart Items */}
               <div className="flex-1 overflow-y-auto py-4">
                 <div className="space-y-4">
                   {items.map((item) => (
@@ -101,6 +105,8 @@ export function CartSidebar() {
                   ))}
                 </div>
               </div>
+
+              {/* Cart Footer */}
               <div className="border-t pt-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-base font-medium">Total</span>
@@ -110,7 +116,7 @@ export function CartSidebar() {
                 <Separator />
 
                 <div className="space-y-2">
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full" size="lg" onClick={()=> router.push("/checkout")}>
                     Checkout
                   </Button>
                   <Button variant="outline" className="w-full" onClick={clearCart}>

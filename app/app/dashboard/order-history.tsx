@@ -1,5 +1,11 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface OrderHistoryProps {
   orders: {
@@ -21,23 +27,23 @@ interface OrderHistoryProps {
   }[];
 }
 
-export function OrderHistory({ orders }: OrderHistoryProps) {
+export function OrderHistory({ orders }: any) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "delivered":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "shipped":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "processing":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "pending":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
       case "cancelled":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -51,29 +57,38 @@ export function OrderHistory({ orders }: OrderHistoryProps) {
                   Placed on {new Date(order.createdAt).toLocaleDateString()}
                 </CardDescription>
               </div>
-              <Badge className={getStatusColor(order.status)}>
+              {/* <Badge className={getStatusColor(order.status)}>
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-              </Badge>
+              </Badge> */}
             </div>
           </CardHeader>
 
           <CardContent>
             <div className="space-y-2">
-              {order.items.map((item, index) => (
+              {order.products.map((item, index) => (
                 <div key={index} className="flex justify-between items-center">
                   <span>
-                    {item.productName} x {item.quantity}
+                    {item.name} x {item.quantity}
                   </span>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>${(item.price * (item.quantity ?? 1)).toFixed(2)}</span>
                 </div>
               ))}
               <div className="border-t pt-2 flex justify-between items-center font-semibold">
                 <span>Total</span>
-                <span>${order.total.toFixed(2)}</span>
+                <span>
+                  {" "}
+                  $
+                  {order.products
+                    .reduce(
+                      (sum, item) => sum + item.price * (item.quantity ?? 1),
+                      0
+                    )
+                    .toFixed(2)}
+                </span>
               </div>
             </div>
 
-            <div className="mt-4 text-sm text-gray-600">
+            {/* <div className="mt-4 text-sm text-gray-600">
               <p>
                 <strong>Shipping Address:</strong>
               </p>
@@ -82,7 +97,7 @@ export function OrderHistory({ orders }: OrderHistoryProps) {
                 {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
                 {order.shippingAddress.zipCode}
               </p>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       ))}
@@ -95,5 +110,5 @@ export function OrderHistory({ orders }: OrderHistoryProps) {
         </Card>
       )}
     </div>
-  )
+  );
 }
