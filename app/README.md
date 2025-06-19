@@ -143,7 +143,7 @@ Make sure to set these in your Vercel dashboard:
 
 ## Team Members
 
-### Dren Syla - Full Stack Developer
+### Dren Sylaj - Full Stack Developer
 - **Role**: Project Lead & Full Stack Development
 - **Contributions**: 
   - NextAuth authentication system
@@ -153,7 +153,7 @@ Make sure to set these in your Vercel dashboard:
   - API development
   - Database design and implementation
 
-### Altin Asllani && Blend Elezi  - Frontend Developer
+### Altin Asllanaj && Blend Elezi  - Frontend Developer
 - **Role**: UI/UX Development
 - **Contributions**:
   - Component library setup
